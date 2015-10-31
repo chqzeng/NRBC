@@ -1,0 +1,104 @@
+DIPlib License Agreement
+
+[this document is extracted from the license page on our website:
+http://www.diplib.org
+Please check this site for the most recent version.]
+
+The Quantitative Imaging Group of the TU Delft, to be called QI, has
+developed and is the owner of the image processing library written in C
+and all related documentation known as DIPlib, hereafter called SOFTWARE.
+
+QI also developed a MATLAB toolbox for image processing based on DIPlib,
+known as DIPimage. DIPimage is freely available for DIPlib license
+holders.
+
+1. Licenses
+
+1.1. Source code licenses of the SOFTWARE are not available.
+
+1.2. Non-commercial license:
+
+    * A - A University license. This license is for non-commercial use
+      by students and staff in a University research project without
+      an industrial sponsor. Redistribution of SOFTWARE or parts thereof
+      in any form is not permitted. This license is free.
+
+1.3. Commercial licenses:
+
+    * B1 - A single-user license. Price: 2500 Euro.
+    * B2 - A group license. Up to 10 users in a single business unit.
+      Price: 15000 Euro.
+    * C - A closed redistribution license. This license gives, in
+      addition to the no-redistribution licenses (B), the permission to
+      use and redistribute the DIPlib library included in a commercial
+      product, provided that the DIPlib components are neither visible
+      to nor directly accessible by the end-user. Price: on request.
+    * D - A full non-exclusive redistribution license. This terms of
+      this license agreement cannot be in conflict with the other
+      licenses (A, B, and C). Price: on request.
+
+1.4. The commercial licenses for a non-supported computer platform may
+be provided on request. There will be minimum surcharge of 500 Euro.
+
+1.5. All prices listed are exclusive BTW (value added tax). BTW in the
+The Netherlands is 19%.
+
+2. Upgrades and Support
+
+2.1. All licenses are provided on an "as is" basis without support or
+guarantees.
+
+2.2. All license holders are entitled to freely download upgrades of the
+the SOFTWARE as they become available, up to a maximum of three years
+after the original purchase.
+
+2.3. QI has the right to stop the development and distribution of the
+SOFTWARE at any time without prior notice to the license holders.
+
+3. Disclaimer
+
+3.1. The CUSTOMER acknowledges that the SOFTWARE is a research tool and
+that it is being supplied 'as is', without any accompanying services
+from QI.
+
+3.2. QI makes no representations or warranties of any kind, either
+express or implied, as to any matter whatsoever, including but not
+limited to implied warranties of merchantability or fitness for any
+particular purpose or that the use of the SOFTWARE will not infringe any
+patent or copyright.
+
+3.3. The CUSTOMER agrees that QI shall not be held to any liability with
+respect to any claim by the CUSTOMER or a third party arising from or on
+account of the use of the SOFTWARE or redistribution of the SOFTWARE. QI
+shall not be liable for any special indirect, incidental or
+consequential damages arising out of the licensed rights granted hereunder.
+
+3.4. QI cannot be held to any liability with respect to errors in the
+SOFTWARE or damage caused by correct or incorrect use of the SOFTWARE.
+
+4. Copyrights
+
+4.1.  The SOFTWARE is build with several external libraries (gif, ics,
+jpeg, tiff and zlib). The  licenses of these libraries expressly permit
+the embedding in commercial and non-commercial applications. They do
+require to mention the copyright with the application. For each library,
+the copyright file is included with the distribution of SOFTWARE:
+
+    * gif_license.txt
+    * ics_license.txt
+    * jpeg_license.txt
+    * tiff_license.txt
+    * zlib_license.txt
+
+Request license
+
+A University license (license A) can be obtained following the
+instructions on our website:
+http://www.diplib.org/download
+You can then immediately download the software.
+
+For other licenses (license B, C or D), please send an e-mail to
+license@diplib.org
+
+--
+The DIPlib team, 17 March 2010

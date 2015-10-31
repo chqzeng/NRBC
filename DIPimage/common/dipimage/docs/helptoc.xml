@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='ISO-8859-1' ?>
+
+<toc version="1.0">
+
+   <tocitem target="dipimage_product_page.html" image="private/dip_icon.gif">
+      DIPimage Toolbox
+
+      <tocitem target="dum_gettingstarted.html" image="$toolbox/matlab/icons/greencircleicon.gif">
+         Getting Started with the DIPimage Toolbox
+      </tocitem>
+
+      <tocitem target="dum_dip_image.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         The dip_image Object
+      </tocitem>
+
+      <tocitem target="dum_dip_measurement.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         The dip_measurement Object
+      </tocitem>
+
+      <tocitem target="dum_figurewindows.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         Figure Windows
+      </tocitem>
+
+      <tocitem target="dum_functions.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         Toolbox Functions
+      </tocitem>
+
+      <tocitem target="dum_customizing.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         Customizing the DIPimage Environment
+      </tocitem>
+
+      <tocitem target="dum_dip_interface.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         Low-level DIPlib Interface
+      </tocitem>
+
+      <tocitem target="dum_compiler.html" image="$toolbox/matlab/icons/pagesicon.gif">
+         DIPimage and the MATLAB Compiler
+      </tocitem>
+
+      <tocitem target="dipimage_product_page.html#online" image="$toolbox/matlab/icons/pdficon.gif">
+         Printable Documentation (PDF, online)
+      </tocitem>
+
+   </tocitem>
+
+</toc>
