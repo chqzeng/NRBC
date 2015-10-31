@@ -1,0 +1,621 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>NRBC</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-10-30"><meta name="DC.source" content="NRBC.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#2">initialize and data input</a></li><li><a href="#3">image pre-processing</a></li><li><a href="#4">Image pyramid construction</a></li><li><a href="#5">River segment connection by NRBC</a></li><li><a href="#6">post-processing using Direct Path filter</a></li><li><a href="#7">Extract the centerline of the connected river mask</a></li><li><a href="#8">Export Output result</a></li></ul></div><pre class="codeinput">
+  <span class="keyword">function [water_mask, Mask_filled, nedgelist]=NRBC (str_Water_Mask, str_NDVI, level, scale, bPath_filter, Max_River_width, Mask_ignore_area_size,min_length)</span>
+<span class="comment">% The NRBC to connect water segments with an assistant NDVI imagery</span>
+<span class="comment">%    Input:</span>
+<span class="comment">%       str_Water_Mask: the path to the input Water mask file, preferred GeoTIFF file</span>
+<span class="comment">%       str_NDVI:  the NDVI mask with the same dimesion as the water mask,</span>
+<span class="comment">%                  please scale the NDVI to 0 -1000 (1000 means dense vegetaiton)</span>
+<span class="comment">%    optional parameters:</span>
+<span class="comment">%       scale :  %the image pyrimad scale (optional, default is 2 )</span>
+<span class="comment">%       level:  %the image pyrimad level (optional, default is 5</span>
+<span class="comment">%       bPath_filter:  % default (is 0) not run the path filter since it is very slow</span>
+<span class="comment">%       Max_River_width:        optional, estimated river width (in pixels)</span>
+<span class="comment">%       Mask_ignore_area_size:  optional, estimated ignore hole size (in pixels)</span>
+<span class="comment">%</span>
+<span class="comment">%       Max_River_width=150;  %used to give the final central line and remove spurs</span>
+<span class="comment">%       Mask_ignore_area_size=200;  %used to fill the little holes less than 200 pixels</span>
+<span class="comment">%       min_length=100;  % the length small than min_length will be filtered</span>
+<span class="comment">%</span>
+<span class="comment">%   Function output:</span>
+<span class="comment">%       water_mask: the input original water mask</span>
+<span class="comment">%       Mask_filled: the water mask aftr connection and filtering</span>
+<span class="comment">%       nedgelist: the edge list for the centerline.</span>
+<span class="comment">%</span>
+<span class="comment">%   Output files:</span>
+<span class="comment">%       ".\Results\####_mask.tif": the connected river mask</span>
+<span class="comment">%       ".\Results\####_edgelist.shp": the shapefile of the centerline</span>
+<span class="comment">%</span>
+<span class="comment">%  Environment:  Relied on Models &amp; Version:</span>
+<span class="comment">% 'Image Processing Toolbox'		'9.2'</span>
+<span class="comment">% 'Mapping Toolbox'                   	   '4.1'</span>
+<span class="comment">% 'MATLAB'                     				 '8.5'</span>
+<span class="comment">% 'Neural Network Toolbox'           '8.3'</span>
+<span class="comment">% 'Statistics and Machine Learning Toolbox'   '10.0'</span>
+<span class="comment">%</span>
+<span class="comment">%   DEMO example: [water_mask_orgin, Mask_connected, edge_list]=NRBC ('.\Test_Data\WaterMask_bin.tif', '.\Test_Data\NDVI.tif');</span>
+</pre><h2>initialize and data input<a name="2"></a></h2><pre class="codeinput">clc;
+
+<span class="keyword">switch</span> nargin   <span class="comment">% input check</span>
+    <span class="keyword">case</span> 2
+         scale=2;  <span class="comment">%the image pyrimad scale is 2</span>
+         level=5;  <span class="comment">%the image pyrimad level is 5</span>
+         bPath_filter=0;  <span class="comment">% default not run the path filter since it is very slow</span>
+         Max_River_width=150;  <span class="comment">%used to give the final central line and remove spurs</span>
+        Mask_ignore_area_size=200;  <span class="comment">%used to fill the little holes less than 200 pixels</span>
+        min_length=100;  <span class="comment">% the length small than min_length will be filtered</span>
+    <span class="keyword">case</span> 3
+        scale=2;
+        bPath_filter=0;
+        Max_River_width=150;
+        Mask_ignore_area_size=200;
+        min_length=100;
+    <span class="keyword">case</span> 4
+        bPath_filter=0;
+        Max_River_width=150;
+        Mask_ignore_area_size=200;
+        min_length=100;
+    <span class="keyword">case</span> 5
+         Max_River_width=150;
+        Mask_ignore_area_size=200;
+        min_length=100;
+    <span class="keyword">case</span> 6
+        Mask_ignore_area_size=200;
+        min_length=100;
+    <span class="keyword">case</span> 7
+        min_length=100;
+    <span class="keyword">case</span> 8
+    <span class="keyword">otherwise</span>
+        disp(<span class="string">'incorrect number of input, will exit'</span>)
+        <span class="keyword">return</span>;
+<span class="keyword">end</span>
+
+[water_mask, R_mask] = geotiffread(str_Water_Mask);
+[NDVI, R_NDVI] = geotiffread(str_NDVI);
+info = geotiffinfo(str_Water_Mask);
+T_NDVI=0.5;  <span class="comment">%the threshold for NDVI is 50% of denstest vegetation</span>
+
+NDVI(NDVI&gt;1000)=0;  <span class="comment">% check the NDVI layer</span>
+NDVI(NDVI&lt;0)=0;
+disp(<span class="string">'Finished input image loading'</span>)
+
+</pre><pre class="codeoutput">Finished input image loading
+Warning: Image is too big to fit on screen; displaying at 33% 
+Warning: Image is too big to fit on screen; displaying at 33% 
+</pre><img vspace="5" hspace="5" src="NRBC_01.png" alt=""> <img vspace="5" hspace="5" src="NRBC_02.png" alt=""> <h2>image pre-processing<a name="3"></a></h2><p>1. start to refine the image by removing the small object and fill small holes</p><pre class="codeinput"><span class="comment">%remove the small patches</span>
+Conn_comp= bwconncomp(water_mask);
+numPixels = cellfun(@numel,Conn_comp.PixelIdxList); <span class="comment">%retrieve the number of pixels in each object</span>
+Small_Patch_idx=find(numPixels&lt;Mask_ignore_area_size);<span class="comment">%find the patches with area &lt; T</span>
+water_mask_larger_Area=water_mask;
+<span class="keyword">for</span> idx = 1: length(Small_Patch_idx)
+    <span class="comment">%remove the areas with smaller objects</span>
+    water_mask_larger_Area(Conn_comp.PixelIdxList{Small_Patch_idx(idx)})=0;
+<span class="keyword">end</span>
+<span class="comment">%fille the small holes</span>
+water_mask_larger_Area_fill= ~bwareaopen(~water_mask_larger_Area, Mask_ignore_area_size);
+
+<span class="comment">% to display the progress on the screen</span>
+disp(<span class="string">'Finished data pre-procesing'</span>)
+</pre><pre class="codeoutput">Finished data pre-procesing
+</pre><h2>Image pyramid construction<a name="4"></a></h2><pre class="codeinput"><span class="comment">%---------construct the pyramid (details please see in the paper)-----</span>
+Img_pyr_array= cell(level,1);
+NDVI_pyr_array= cell(level,1);
+Img_intermediate_array= cell(level,1);
+
+Img_pyr_array{1}=Image_Pyrimad(water_mask_larger_Area_fill,scale);
+NDVI_pyr_array{1}=Image_Pyrimad(NDVI,scale);
+
+<span class="keyword">for</span> idx=2:level
+    Img_pyr_array{idx}=Image_Pyrimad(Img_pyr_array{idx-1},scale);
+    NDVI_pyr_array{idx}=Image_Pyrimad(NDVI_pyr_array{idx-1},scale);
+<span class="keyword">end</span>
+
+
+<span class="comment">% -----------topology deliveray  ------------</span>
+T_NDVI=min(NDVI(:))+T_NDVI*range(NDVI(:)); <span class="comment">%threshold for the NDVI</span>
+Img_intermediate_array{level-1}=Image_Morph_connection(Img_pyr_array{level-1},Img_pyr_array{level},NDVI_pyr_array{level-1}&gt;T_NDVI,scale,1);
+<span class="keyword">for</span> idx=2:(level-1)
+    Img_intermediate_array{level-idx}=Image_Morph_connection(Img_pyr_array{level-idx},Img_intermediate_array{level-idx+1},NDVI_pyr_array{level-idx}&gt;T_NDVI,scale,idx);
+<span class="keyword">end</span>
+
+Img_connected=Image_Morph_connection(water_mask_larger_Area_fill,Img_intermediate_array{1},NDVI&gt;T_NDVI,scale,level);
+
+clear <span class="string">Img_pyr_array</span> <span class="string">NDVI_pyr_array</span> <span class="string">Img_intermediate_array</span>
+<span class="comment">% clear Img_pyr_Lev* NDVI_pyr_Lev* Img_intermediate</span>
+disp(<span class="string">'Finished Image pyrimad construction'</span>)
+
+<span class="comment">%fill the little holes</span>
+Img_connected= ~bwareaopen(~Img_connected, Mask_ignore_area_size);
+
+</pre><pre class="codeoutput">Finished Image pyrimad construction
+Warning: Image is too big to fit on screen; displaying at 33% 
+</pre><img vspace="5" hspace="5" src="NRBC_03.png" alt=""> <h2>River segment connection by NRBC<a name="5"></a></h2><pre class="codeinput"><span class="comment">%------------------core function: run the river patch connection--------------</span>
+[Mask_filled Mask_new_parts]=River_Patch_connection(water_mask_larger_Area_fill,Img_connected,fix(scale^level*sqrt(2)));
+disp(<span class="string">'Finished water patch connection'</span>)
+
+</pre><pre class="codeoutput">Debug: current processing patch: 1
+     Debug: process potential connected neighbour patch:2
+          Debug: extend central_line not long enough--&gt;Neigh
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 2
+     Debug: process potential connected neighbour patch:4
+          Debug: extend central_line not long enough--&gt;Neigh
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 3
+Debug: current processing patch: 4
+    Debug: reach the end of central line
+     Debug: process potential connected neighbour patch:7
+          Debug: successful case; fill this neighbour patch
+     Debug: process potential connected neighbour patch:15
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 5
+     Debug: process potential connected neighbour patch:6
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 6
+     Debug: process potential connected neighbour patch:5
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 7
+     Debug: process potential connected neighbour patch:14
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 8
+     Debug: process potential connected neighbour patch:13
+          Debug: extend central_line not long enough--&gt;Neigh
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 9
+     Debug: process potential connected neighbour patch:10
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 10
+     Debug: process potential connected neighbour patch:9
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 11
+    Debug: detected loop, exit the current search
+          at start point (col, row): 484, 964
+     Debug: process potential connected neighbour patch:12
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 12
+          Debug:   The central_line gap is larger than threshold: 45
+          at start point (col, row): 499, 915
+          Debug:   The central_line gap is larger than threshold: 45
+          at start point (col, row): 503, 931
+Debug: current processing patch: 13
+    Debug: reach the end of central line
+     Debug: process potential connected neighbour patch:20
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 14
+Debug: current processing patch: 15
+    Debug: reach the end of central line
+    Debug: reach the end of central line
+     Debug: process potential connected neighbour patch:25
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 16
+     Debug: process potential connected neighbour patch:17
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 17
+     Debug: process potential connected neighbour patch:16
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 18
+    Debug: reach the end of central line
+Debug: current processing patch: 19
+Debug: current processing patch: 20
+     Debug: process potential connected neighbour patch:21
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 21
+    Debug: reach the end of central line
+     Debug: process potential connected neighbour patch:23
+          Debug: extend central_line not long enough--&gt;Neigh
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 22
+Debug: current processing patch: 23
+     Debug: process potential connected neighbour patch:24
+          Debug: extend central_line not long enough--&gt;Ref
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 24
+     Debug: process potential connected neighbour patch:28
+          Debug: failed case: Length along central direction is shorter than expected
+Debug: current processing patch: 25
+     Debug: process potential connected neighbour patch:33
+          Debug: extend central_line not long enough--&gt;Ref
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 26
+    Debug: reach the end of central line
+Debug: current processing patch: 27
+Debug: current processing patch: 28
+     Debug: process potential connected neighbour patch:24
+          Debug: failed case: Length along central direction is shorter than expected
+     Debug: process potential connected neighbour patch:30
+          Debug: extend central_line not long enough--&gt;Ref
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 29
+Debug: current processing patch: 30
+     Debug: process potential connected neighbour patch:31
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 31
+    Debug: reach the end of central line
+Debug: current processing patch: 32
+Debug: current processing patch: 33
+     Debug: process potential connected neighbour patch:34
+          Debug: extend central_line not long enough--&gt;Neigh
+          Debug: failed case: Width difference/STD too large: 
+          Width info: Mean_Ref:  43.46, Mean_Neigh:   2.83, Std_Ref:   2.21, Std_Neigh:   0.00
+Debug: current processing patch: 34
+     Debug: process potential connected neighbour patch:33
+          Debug: extend central_line not long enough--&gt;Ref
+          Debug: successful case; fill this neighbour patch
+     Debug: process potential connected neighbour patch:35
+          Debug: extend central_line not long enough--&gt;Ref
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 35
+    Debug: reach the end of central line
+     Debug: process potential connected neighbour patch:40
+          Debug: successful case; fill this neighbour patch
+     Debug: process potential connected neighbour patch:42
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 36
+     Debug: process potential connected neighbour patch:37
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 37
+     Debug: process potential connected neighbour patch:38
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 38
+     Debug: process potential connected neighbour patch:41
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 39
+Debug: current processing patch: 40
+     Debug: process potential connected neighbour patch:43
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 41
+Debug: current processing patch: 42
+     Debug: process potential connected neighbour patch:45
+          Debug: extend central_line not long enough--&gt;Neigh
+          Debug: successful case; fill this neighbour patch
+Debug: current processing patch: 43
+    Debug: reach the end of central line
+Debug: current processing patch: 44
+Debug: current processing patch: 45
+Finished water patch connection
+Warning: Image is too big to fit on screen; displaying at 33% 
+</pre><img vspace="5" hspace="5" src="NRBC_04.png" alt=""> <h2>post-processing using Direct Path filter<a name="6"></a></h2><p>--- (see paper for details) ---</p><pre class="codeinput"><span class="comment">%cd 'D:\Matlab\DIPimage\'</span>
+<span class="keyword">if</span> (1)  <span class="comment">%bPath_filter</span>
+    dipstart  <span class="comment">%need to set up the DIPIMAGE environment</span>
+
+    flt_hrz = dip_directedpathopening(uint8(Mask_filled),[],[min_length,0],1,1); <span class="comment">%horizontal</span>
+    flt_vtc = dip_directedpathopening(uint8(Mask_filled),[],[0,min_length],1,1); <span class="comment">%vertical</span>
+    flt_diag1 = dip_directedpathopening(uint8(Mask_filled),[],[min_length,min_length],1,1);<span class="comment">%diagonal1</span>
+    flt_diag2 = dip_directedpathopening(uint8(Mask_filled),[],[min_length,-1*min_length],1,1);<span class="comment">%diagonal2</span>
+
+    <span class="comment">%find the minimum of all the value (please use max for open operation)</span>
+    flt_diag = min(flt_diag1,flt_diag2);
+    Mask_Path_filter=min(flt_hrz,flt_vtc);
+    Mask_Path_filter=min(Mask_Path_filter, flt_diag);
+    Mask_Path_filter=dip_array(Mask_Path_filter)&gt;0;  <span class="comment">%logical value array</span>
+    <span class="comment">%imwrite(uint8(dip_array(overall))*255,strcat(outputpath,'\overall.tif'),'TIFF');</span>
+    clear <span class="string">flt_*</span>
+
+    Mask_filled=Mask_Path_filter;
+    clear <span class="string">Mask_Path_filter</span>;
+    disp(<span class="string">'Finished Direct Path Filter'</span>)
+
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+DIPlib 2.7 (Oct 30 2014 - Release [on Cygwin (with OpenMP)])
+    Scientific Image Analysis Library
+    Quantitative Imaging Group, Delft University of Technology 1995-2014
+    info@diplib.org
+
+
+dipIO 2.7 (Oct 30 2014 - Release)
+    File I/O library for DIPlib
+    Quantitative Imaging Group, Delft University of Technology 1999-2014
+    info@diplib.org
+
+Finished Direct Path Filter
+Warning: Image is too big to fit on screen; displaying at 33% 
+</pre><img vspace="5" hspace="5" src="NRBC_05.png" alt=""> <h2>Extract the centerline of the connected river mask<a name="7"></a></h2><pre class="codeinput">Img_thin= bwmorph(Mask_filled,<span class="string">'thin'</span>,Inf);
+<span class="comment">%link the edge</span>
+edgelist = edgelink(Img_thin);
+<span class="comment">%clean the edge</span>
+nedgelist = cleanedgelist(edgelist, Max_River_width/2);
+Old_edge_num=0;
+<span class="keyword">while</span> Old_edge_num~=length(nedgelist)  <span class="comment">%iterate till stable edge numbers</span>
+    Old_edge_num=length(nedgelist);
+    <span class="comment">%nedgelist = cleanedgelist(edgelist, Max_River_width/2);</span>
+    nedgelist = cleanedgelist(nedgelist, Max_River_width/2);
+<span class="keyword">end</span>
+clear <span class="string">edgelist</span>
+disp(<span class="string">'Finished Centerline detection'</span>)
+</pre><pre class="codeoutput">Finished Centerline detection
+</pre><h2>Export Output result<a name="8"></a></h2><pre class="codeinput"><span class="comment">%---------------export the edgelist result and save into files ---------------</span>
+str=<span class="string">'.\Results\'</span>;
+mkdir(str);
+[pathstr,name,ext] = fileparts(str_Water_Mask);
+strOutuput_shp=strcat(str,name,<span class="string">'_edge'</span>);
+ExportEdgelist2ShpFile(nedgelist,info.BoundingBox(1),info.BoundingBox(4),info.SpatialRef.CellExtentInWorldX,strOutuput_shp);  <span class="comment">%assume grid cells</span>
+
+<span class="comment">%export the connect river mask</span>
+strOutuput_mask=strcat(str,name,<span class="string">'_mask'</span>);
+geotiffwrite(strOutuput_mask,Mask_filled,R_mask,<span class="string">'GeoKeyDirectoryTag'</span>, info.GeoTIFFTags.GeoKeyDirectoryTag)
+disp(<span class="string">'Finished result export and file saving'</span>)
+
+<span class="comment">% save('Bowriver_Step2_SAR_refine_and_Patch_Connection','data','water_mask_larger_Area_fill','Img_connected','Mask_filled', 'Mask_Path_filter','nedgelist');</span>
+<span class="comment">%export the central line list, with the offset of the file in UTM coords, and spatial resolution</span>
+</pre><pre class="codeoutput">Warning: Directory already exists. 
+Finished result export and file saving
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%function [water_mask, Mask_filled, nedgelist]=NRBC (str_Water_Mask, str_NDVI, level, scale, bPath_filter, Max_River_width, Mask_ignore_area_size,min_length)
+% The NRBC to connect water segments with an assistant NDVI imagery
+%    Input:
+%       str_Water_Mask: the path to the input Water mask file, preferred GeoTIFF file
+%       str_NDVI:  the NDVI mask with the same dimesion as the water mask, 
+%                  please scale the NDVI to 0 -1000 (1000 means dense vegetaiton)
+%    optional parameters:
+%       scale :  %the image pyrimad scale (optional, default is 2 )  
+%       level:  %the image pyrimad level (optional, default is 5
+%       bPath_filter:  % default (is 0) not run the path filter since it is very slow
+%       Max_River_width:        optional, estimated river width (in pixels)
+%       Mask_ignore_area_size:  optional, estimated ignore hole size (in pixels)
+%        
+%       Max_River_width=150;  %used to give the final central line and remove spurs
+%       Mask_ignore_area_size=200;  %used to fill the little holes less than 200 pixels
+%       min_length=100;  % the length small than min_length will be filtered
+% 
+%   Function output: 
+%       water_mask: the input original water mask
+%       Mask_filled: the water mask aftr connection and filtering
+%       nedgelist: the edge list for the centerline.
+%
+%   Output files:
+%       ".\Results\####_mask.tif": the connected river mask
+%       ".\Results\####_edgelist.shp": the shapefile of the centerline
+% 
+%  Environment:  Relied on Models & Version:
+% 'Image Processing Toolbox'		'9.2'
+% 'Mapping Toolbox'                   	   '4.1'
+% 'MATLAB'                     				 '8.5'
+% 'Neural Network Toolbox'           '8.3'
+% 'Statistics and Machine Learning Toolbox'   '10.0' 
+%
+%   DEMO example: [water_mask_orgin, Mask_connected, edge_list]=NRBC ('.\Test_Data\WaterMask_bin.tif', '.\Test_Data\NDVI.tif');
+
+%% initialize and data input 
+clc;
+
+str_Water_Mask='D:\Matlab\River_detection_Matlab_codes\River_Patch_Connection\Test_Data\WaterMask_bin.tif';
+str_NDVI='D:\Matlab\River_detection_Matlab_codes\River_Patch_Connection\Test_Data\NDVI.tif';
+nargin=0;
+switch nargin   % input check
+    case 0
+         scale=2;  %the image pyrimad scale is 2   
+         level=5;  %the image pyrimad level is 5
+         bPath_filter=0;  % default not run the path filter since it is very slow
+         Max_River_width=150;  %used to give the final central line and remove spurs
+        Mask_ignore_area_size=200;  %used to fill the little holes less than 200 pixels
+        min_length=100;  % the length small than min_length will be filtered
+    case 3 
+        scale=2;   
+        bPath_filter=0;
+        Max_River_width=150;  
+        Mask_ignore_area_size=200;  
+        min_length=100;
+    case 4
+        bPath_filter=0;
+        Max_River_width=150;  
+        Mask_ignore_area_size=200;  
+        min_length=100;
+    case 5
+         Max_River_width=150;  
+        Mask_ignore_area_size=200;  
+        min_length=100;
+    case 6
+        Mask_ignore_area_size=200;  
+        min_length=100;
+    case 7
+        min_length=100;
+    case 8
+    otherwise
+        disp('incorrect number of input, will exit')
+        return;
+end
+
+[water_mask, R_mask] = geotiffread(str_Water_Mask);
+[NDVI, R_NDVI] = geotiffread(str_NDVI);
+info = geotiffinfo(str_Water_Mask);
+T_NDVI=0.5;  %the threshold for NDVI is 50% of denstest vegetation
+
+NDVI(NDVI>1000)=0;  % check the NDVI layer
+NDVI(NDVI<0)=0; 
+disp('Finished input image loading')
+
+
+%% image pre-processing
+% 1. start to refine the image by removing the small object and fill small holes
+
+%remove the small patches
+Conn_comp= bwconncomp(water_mask);
+numPixels = cellfun(@numel,Conn_comp.PixelIdxList); %retrieve the number of pixels in each object
+Small_Patch_idx=find(numPixels<Mask_ignore_area_size);%find the patches with area < T
+water_mask_larger_Area=water_mask;
+for idx = 1: length(Small_Patch_idx)
+    %remove the areas with smaller objects
+    water_mask_larger_Area(Conn_comp.PixelIdxList{Small_Patch_idx(idx)})=0; 
+end
+%fille the small holes 
+water_mask_larger_Area_fill= ~bwareaopen(~water_mask_larger_Area, Mask_ignore_area_size);
+
+% to display the progress on the screen
+disp('Finished data pre-procesing')
+
+
+%% Image pyramid construction
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-construct the pyramid (details please see in the paper)REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+Img_pyr_array= cell(level,1);
+NDVI_pyr_array= cell(level,1);
+Img_intermediate_array= cell(level,1);
+
+Img_pyr_array{1}=Image_Pyrimad(water_mask_larger_Area_fill,scale);
+NDVI_pyr_array{1}=Image_Pyrimad(NDVI,scale);
+
+for idx=2:level
+    Img_pyr_array{idx}=Image_Pyrimad(Img_pyr_array{idx-1},scale);
+    NDVI_pyr_array{idx}=Image_Pyrimad(NDVI_pyr_array{idx-1},scale);
+end
+
+
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-topology deliveray  REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+T_NDVI=min(NDVI(:))+T_NDVI*range(NDVI(:)); %threshold for the NDVI
+Img_intermediate_array{level-1}=Image_Morph_connection(Img_pyr_array{level-1},Img_pyr_array{level},NDVI_pyr_array{level-1}>T_NDVI,scale,1);
+for idx=2:(level-1)
+    Img_intermediate_array{level-idx}=Image_Morph_connection(Img_pyr_array{level-idx},Img_intermediate_array{level-idx+1},NDVI_pyr_array{level-idx}>T_NDVI,scale,idx);
+end
+
+Img_connected=Image_Morph_connection(water_mask_larger_Area_fill,Img_intermediate_array{1},NDVI>T_NDVI,scale,level);
+
+clear Img_pyr_array NDVI_pyr_array Img_intermediate_array
+% clear Img_pyr_Lev* NDVI_pyr_Lev* Img_intermediate
+disp('Finished Image pyrimad construction')
+
+%fill the little holes
+Img_connected= ~bwareaopen(~Img_connected, Mask_ignore_area_size);
+
+
+%%  River segment connection by NRBC
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHcore function: run the river patch connectionREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+[Mask_filled Mask_new_parts]=River_Patch_connection(water_mask_larger_Area_fill,Img_connected,fix(scale^level*sqrt(2)));
+disp('Finished water patch connection')
+
+
+%% post-processing using Direct Path filter 
+% REPLACE_WITH_DASH_DASH- (see paper for details) REPLACE_WITH_DASH_DASH-
+%cd 'D:\Matlab\DIPimage\'
+if (1)  %bPath_filter
+    dipstart  %need to set up the DIPIMAGE environment
+
+    flt_hrz = dip_directedpathopening(uint8(Mask_filled),[],[min_length,0],1,1); %horizontal
+    flt_vtc = dip_directedpathopening(uint8(Mask_filled),[],[0,min_length],1,1); %vertical
+    flt_diag1 = dip_directedpathopening(uint8(Mask_filled),[],[min_length,min_length],1,1);%diagonal1
+    flt_diag2 = dip_directedpathopening(uint8(Mask_filled),[],[min_length,-1*min_length],1,1);%diagonal2
+
+    %find the minimum of all the value (please use max for open operation)
+    flt_diag = min(flt_diag1,flt_diag2);
+    Mask_Path_filter=min(flt_hrz,flt_vtc);
+    Mask_Path_filter=min(Mask_Path_filter, flt_diag);
+    Mask_Path_filter=dip_array(Mask_Path_filter)>0;  %logical value array
+    %imwrite(uint8(dip_array(overall))*255,strcat(outputpath,'\overall.tif'),'TIFF');
+    clear flt_*
+    
+    Mask_filled=Mask_Path_filter;
+    clear Mask_Path_filter;
+    disp('Finished Direct Path Filter')
+    
+end
+
+
+%% Extract the centerline of the connected river mask 
+Img_thin= bwmorph(Mask_filled,'thin',Inf);
+%link the edge
+edgelist = edgelink(Img_thin);
+%clean the edge
+nedgelist = cleanedgelist(edgelist, Max_River_width/2);
+Old_edge_num=0;
+while Old_edge_num~=length(nedgelist)  %iterate till stable edge numbers
+    Old_edge_num=length(nedgelist);
+    %nedgelist = cleanedgelist(edgelist, Max_River_width/2);
+    nedgelist = cleanedgelist(nedgelist, Max_River_width/2);
+end
+clear edgelist
+disp('Finished Centerline detection')
+
+
+%% Export Output result
+%REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-export the edgelist result and save into files REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+str='.\Results\';
+mkdir(str);
+[pathstr,name,ext] = fileparts(str_Water_Mask);
+strOutuput_shp=strcat(str,name,'_edge');
+ExportEdgelist2ShpFile(nedgelist,info.BoundingBox(1),info.BoundingBox(4),info.SpatialRef.CellExtentInWorldX,strOutuput_shp);  %assume grid cells
+
+%export the connect river mask
+strOutuput_mask=strcat(str,name,'_mask');
+geotiffwrite(strOutuput_mask,Mask_filled,R_mask,'GeoKeyDirectoryTag', info.GeoTIFFTags.GeoKeyDirectoryTag)
+disp('Finished result export and file saving')
+
+% save('Bowriver_Step2_SAR_refine_and_Patch_Connection','data','water_mask_larger_Area_fill','Img_connected','Mask_filled', 'Mask_Path_filter','nedgelist');
+%export the central line list, with the offset of the file in UTM coords, and spatial resolution
+
+
+
+
+##### SOURCE END #####
+-->
+
+</pre><img vspace="5" hspace="5" src="NRBC_06.png" alt=""> <h2>Geocoded final water mask and centerline<a name="7"></a></h2>
+
+
+</body></html>
