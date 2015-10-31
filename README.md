@@ -1,5 +1,9 @@
-# NRBC (Ongoing project)
+# NRBC  
 A Natural-Rule-Based-Connection (NRBC) Method for River Network Extraction from High-Resolution Imagery  
+
+**usage example**: 
+[water_mask_orgin, Mask_connected, edge_list]=NRBC ('.\Test_Data\WaterMask_bin.tif', '.\Test_Data\NDVI.tif');
+for details, please view the [demonstration_html](https://github.com/chqzeng/NRBC/tree/master/Demonstration_html).
 
 Please cite this work as:  
 Zeng, C.; Bird, S.; Luce, J.J.; Wang, J.	A Natural-Rule-Based-Connection (NRBC) Method for River Network Extraction from High-Resolution Imagery. Remote Sens. 2015, 7, 14055-14078.
